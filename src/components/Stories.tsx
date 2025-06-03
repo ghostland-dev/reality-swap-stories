@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Share, Star, ChevronUp, ChevronDown } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import SearchBar from './SearchBar';
 
 interface Story {
@@ -15,9 +16,12 @@ interface Story {
   comments: number;
   tags: string[];
   timeAgo: string;
+  liked?: boolean;
 }
 
 const Stories = () => {
+  const { toast } = useToast();
+  
   const [allStories] = useState<Story[]>([
     {
       id: 1,
@@ -82,7 +86,6 @@ const Stories = () => {
   const handleSearch = (query: string, filters: string[]) => {
     let filteredStories = allStories;
 
-    // Filter by search query
     if (query.trim()) {
       filteredStories = filteredStories.filter(story =>
         story.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -91,7 +94,6 @@ const Stories = () => {
       );
     }
 
-    // Filter by tags
     if (filters.length > 0) {
       filteredStories = filteredStories.filter(story =>
         filters.some(filter => story.tags.includes(filter))
@@ -110,6 +112,47 @@ const Stories = () => {
         : story
     ));
     setVotedStories(new Set([...votedStories, storyId]));
+    
+    toast({
+      title: voteType === 'up' ? "Vote positif !" : "Vote négatif",
+      description: "Votre vote a été enregistré.",
+    });
+  };
+
+  const handleLike = (storyId: number) => {
+    setStories(stories.map(story => 
+      story.id === storyId 
+        ? { ...story, liked: !story.liked }
+        : story
+    ));
+    
+    toast({
+      title: "Like ajouté !",
+      description: "Vous avez aimé cette histoire.",
+    });
+  };
+
+  const handleShare = (story: Story) => {
+    if (navigator.share) {
+      navigator.share({
+        title: story.title,
+        text: story.content.substring(0, 100) + '...',
+        url: window.location.href
+      });
+    } else {
+      navigator.clipboard.writeText(`${story.title} - ${window.location.href}`);
+      toast({
+        title: "Lien copié !",
+        description: "Le lien de l'histoire a été copié dans le presse-papiers.",
+      });
+    }
+  };
+
+  const loadMoreStories = () => {
+    toast({
+      title: "Chargement...",
+      description: "Nouvelles histoires en cours de chargement.",
+    });
   };
 
   return (
@@ -119,12 +162,10 @@ const Stories = () => {
         <p className="text-gray-600">Découvrez les aventures vécues par la communauté</p>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-8">
         <SearchBar onSearch={handleSearch} />
       </div>
 
-      {/* Stories List */}
       <div className="space-y-6">
         {stories.length === 0 ? (
           <Card className="glass-effect border-none shadow-xl">
@@ -191,17 +232,35 @@ const Stories = () => {
                       </Button>
                     </div>
                     
-                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-reality-600 hover-scale">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-gray-600 hover:text-reality-600 hover-scale"
+                      onClick={() => toast({
+                        title: "Commentaires",
+                        description: "Fonctionnalité des commentaires à venir.",
+                      })}
+                    >
                       <MessageCircle className="w-4 h-4 mr-1" />
                       {story.comments}
                     </Button>
                   </div>
 
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-red-500 hover-scale">
-                      <Heart className="w-4 h-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleLike(story.id)}
+                      className={`hover-scale ${story.liked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
+                    >
+                      <Heart className={`w-4 h-4 ${story.liked ? 'fill-current' : ''}`} />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-reality-600 hover-scale">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleShare(story)}
+                      className="text-gray-600 hover:text-reality-600 hover-scale"
+                    >
                       <Share className="w-4 h-4" />
                     </Button>
                   </div>
@@ -214,7 +273,10 @@ const Stories = () => {
 
       {stories.length > 0 && (
         <div className="mt-8 text-center">
-          <Button className="gradient-primary text-white px-8 py-3 rounded-full hover-scale button-press">
+          <Button 
+            onClick={loadMoreStories}
+            className="gradient-primary text-white px-8 py-3 rounded-full hover-scale button-press"
+          >
             Voir plus d'histoires
           </Button>
         </div>

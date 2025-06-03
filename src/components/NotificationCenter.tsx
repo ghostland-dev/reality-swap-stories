@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Heart, MessageCircle, Trophy, Star, Users } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
   id: number;
@@ -19,7 +20,9 @@ interface NotificationCenterProps {
 }
 
 const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
-  const notifications: Notification[] = [
+  const { toast } = useToast();
+  
+  const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: 1,
       type: 'like',
@@ -60,7 +63,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
       timeAgo: '1 jour',
       read: true
     }
-  ];
+  ]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -77,13 +80,32 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
     }
   };
 
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notification => 
+      ({ ...notification, read: true })
+    ));
+    toast({
+      title: "Notifications marquées comme lues",
+      description: "Toutes vos notifications ont été marquées comme lues.",
+    });
+  };
+
+  const markAsRead = (notificationId: number) => {
+    setNotifications(notifications.map(notification => 
+      notification.id === notificationId 
+        ? { ...notification, read: true }
+        : notification
+    ));
+  };
+
   if (!isOpen) return null;
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in">
       <Card className="w-full max-w-md max-h-[80vh] overflow-hidden glass-effect border-none shadow-2xl animate-scale-in">
         <CardContent className="p-0">
-          {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gradient">Notifications</h2>
@@ -92,19 +114,19 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
               </Button>
             </div>
             <p className="text-sm text-gray-600 mt-1">
-              {notifications.filter(n => !n.read).length} nouvelles notifications
+              {unreadCount} nouvelles notifications
             </p>
           </div>
 
-          {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
             {notifications.map((notification, index) => (
               <div
                 key={notification.id}
-                className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors animate-fade-in-up ${
+                className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors animate-fade-in-up cursor-pointer ${
                   !notification.read ? 'bg-reality-50/30' : ''
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => !notification.read && markAsRead(notification.id)}
               >
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 mt-1">
@@ -131,11 +153,12 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
             ))}
           </div>
 
-          {/* Footer */}
           <div className="p-4 border-t border-gray-200">
             <Button 
+              onClick={markAllAsRead}
               variant="ghost" 
               className="w-full text-reality-600 hover:text-reality-700 hover:bg-reality-50"
+              disabled={unreadCount === 0}
             >
               Marquer tout comme lu
             </Button>

@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Crown, Medal, Trophy, TrendingUp, Star, Users, Heart } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import CreateStory from './CreateStory';
 
 interface LeaderboardEntry {
   rank: number;
@@ -16,6 +18,8 @@ interface LeaderboardEntry {
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
+  const [showCreateStory, setShowCreateStory] = useState(false);
+  const { toast } = useToast();
 
   const leaderboardData: Record<string, LeaderboardEntry[]> = {
     weekly: [
@@ -76,126 +80,138 @@ const Leaderboard = () => {
     }
   };
 
+  const handleCreateStory = () => {
+    setShowCreateStory(true);
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 pb-24">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gradient mb-4">Classement</h2>
-        <p className="text-gray-600">Les meilleurs conteurs de la communauté</p>
-      </div>
+    <>
+      <div className="w-full max-w-2xl mx-auto p-6 pb-24">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gradient mb-4">Classement</h2>
+          <p className="text-gray-600">Les meilleurs conteurs de la communauté</p>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-8">
-        <Button
-          variant={activeTab === 'weekly' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('weekly')}
-          className={`flex-1 ${activeTab === 'weekly' ? 'gradient-primary text-white' : 'text-gray-600'}`}
-        >
-          Cette semaine
-        </Button>
-        <Button
-          variant={activeTab === 'monthly' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('monthly')}
-          className={`flex-1 ${activeTab === 'monthly' ? 'gradient-primary text-white' : 'text-gray-600'}`}
-        >
-          Ce mois
-        </Button>
-        <Button
-          variant={activeTab === 'allTime' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('allTime')}
-          className={`flex-1 ${activeTab === 'allTime' ? 'gradient-primary text-white' : 'text-gray-600'}`}
-        >
-          Tout temps
-        </Button>
-      </div>
-
-      {/* Leaderboard */}
-      <div className="space-y-3">
-        {leaderboardData[activeTab].map((entry, index) => (
-          <Card 
-            key={entry.username} 
-            className={`glass-effect border-none shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up ${getRankClass(entry.rank)}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
+        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-8">
+          <Button
+            variant={activeTab === 'weekly' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('weekly')}
+            className={`flex-1 ${activeTab === 'weekly' ? 'gradient-primary text-white' : 'text-gray-600'}`}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    {getRankIcon(entry.rank)}
-                    <div className="text-3xl">{entry.avatar}</div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-bold text-gray-900">{entry.username}</h3>
-                      {entry.badge && (
-                        <span className="px-2 py-1 bg-reality-100 text-reality-700 text-xs rounded-full font-medium">
-                          {entry.badge}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        <span>{entry.points.toLocaleString()} pts</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Users className="w-4 h-4 text-blue-500" />
-                        <span>{entry.storiesCount} histoires</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Heart className="w-4 h-4 text-red-500" />
-                        <span>{entry.likesReceived} likes</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            Cette semaine
+          </Button>
+          <Button
+            variant={activeTab === 'monthly' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('monthly')}
+            className={`flex-1 ${activeTab === 'monthly' ? 'gradient-primary text-white' : 'text-gray-600'}`}
+          >
+            Ce mois
+          </Button>
+          <Button
+            variant={activeTab === 'allTime' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('allTime')}
+            className={`flex-1 ${activeTab === 'allTime' ? 'gradient-primary text-white' : 'text-gray-600'}`}
+          >
+            Tout temps
+          </Button>
+        </div>
 
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gradient">
-                    #{entry.rank}
-                  </div>
-                  {entry.rank <= 3 && (
-                    <div className="flex items-center justify-end mt-1">
-                      <TrendingUp className="w-4 h-4 text-green-500" />
+        <div className="space-y-3">
+          {leaderboardData[activeTab].map((entry, index) => (
+            <Card 
+              key={entry.username} 
+              className={`glass-effect border-none shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up ${getRankClass(entry.rank)}`}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-3">
+                      {getRankIcon(entry.rank)}
+                      <div className="text-3xl">{entry.avatar}</div>
                     </div>
-                  )}
+                    
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-bold text-gray-900">{entry.username}</h3>
+                        {entry.badge && (
+                          <span className="px-2 py-1 bg-reality-100 text-reality-700 text-xs rounded-full font-medium">
+                            {entry.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 text-yellow-500" />
+                          <span>{entry.points.toLocaleString()} pts</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          <span>{entry.storiesCount} histoires</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Heart className="w-4 h-4 text-red-500" />
+                          <span>{entry.likesReceived} likes</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gradient">
+                      #{entry.rank}
+                    </div>
+                    {entry.rank <= 3 && (
+                      <div className="flex items-center justify-end mt-1">
+                        <TrendingUp className="w-4 h-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="glass-effect border-none shadow-xl mt-8">
+          <CardContent className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-reality-500 to-reality-700 rounded-full flex items-center justify-center">
+              <Star className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Votre classement</h3>
+            <p className="text-gray-600 mb-4">
+              Vous êtes actuellement #47 avec 1,847 points
+            </p>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-reality-600">3</div>
+                <div className="text-sm text-gray-600">Histoires</div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <div>
+                <div className="text-2xl font-bold text-reality-600">156</div>
+                <div className="text-sm text-gray-600">Likes reçus</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-reality-600">23</div>
+                <div className="text-sm text-gray-600">Commentaires</div>
+              </div>
+            </div>
+            <Button 
+              onClick={handleCreateStory}
+              className="gradient-primary text-white mt-4 hover-scale"
+            >
+              Raconter une nouvelle histoire
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* User's rank info */}
-      <Card className="glass-effect border-none shadow-xl mt-8">
-        <CardContent className="p-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-reality-500 to-reality-700 rounded-full flex items-center justify-center">
-            <Star className="w-8 h-8 text-white" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Votre classement</h3>
-          <p className="text-gray-600 mb-4">
-            Vous êtes actuellement #47 avec 1,847 points
-          </p>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-reality-600">3</div>
-              <div className="text-sm text-gray-600">Histoires</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-reality-600">156</div>
-              <div className="text-sm text-gray-600">Likes reçus</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-reality-600">23</div>
-              <div className="text-sm text-gray-600">Commentaires</div>
-            </div>
-          </div>
-          <Button className="gradient-primary text-white mt-4 hover-scale">
-            Raconter une nouvelle histoire
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+      {showCreateStory && (
+        <CreateStory 
+          onClose={() => setShowCreateStory(false)} 
+        />
+      )}
+    </>
   );
 };
 
