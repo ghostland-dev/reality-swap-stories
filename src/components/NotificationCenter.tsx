@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Heart, MessageCircle, Trophy, Star } from 'lucide-react';
+import { Bell, X, Heart, MessageCircle, Trophy, Star, Check } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -79,31 +79,49 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
     setNotifications(notifications.map(notif => ({ ...notif, read: true })));
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications(notifications.filter(notif => notif.id !== id));
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-20 z-50 p-4">
-      <Card className="w-full max-w-md max-h-[70vh] overflow-hidden glass-effect border-none shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-20 z-50 p-4 animate-fade-in-up">
+      <Card className="w-full max-w-md max-h-[70vh] overflow-hidden glass-effect border-none shadow-2xl animate-slide-in-right">
         <CardContent className="p-0">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-white/20">
             <div className="flex items-center space-x-2">
-              <Bell className="w-5 h-5 text-reality-600" />
+              <div className="relative">
+                <Bell className="w-5 h-5 text-reality-600" />
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="text-white text-xs">{unreadCount}</span>
+                  </div>
+                )}
+              </div>
               <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
-              {unreadCount > 0 && (
-                <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
-                  {unreadCount}
-                </span>
-              )}
             </div>
+            
             <div className="flex space-x-2">
               {unreadCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-                  Tout marquer comme lu
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={markAllAsRead}
+                  className="hover-scale text-xs px-2 py-1"
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Tout lu
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onClose}
+                className="hover-scale"
+              >
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -117,32 +135,46 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
               </div>
             ) : (
               <div className="space-y-0">
-                {notifications.map((notification) => (
+                {notifications.map((notification, index) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
-                      !notification.read ? 'bg-reality-50' : 'hover:bg-gray-50'
+                    className={`p-4 border-b border-gray-100/50 cursor-pointer transition-all duration-300 hover:bg-white/20 ${
+                      !notification.read ? 'bg-reality-50/30' : ''
                     }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
                     onClick={() => markAsRead(notification.id)}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 animate-bounce-soft">
                         {getIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className={`text-sm font-medium ${
+                          <p className={`text-sm font-medium transition-colors ${
                             !notification.read ? 'text-gray-900' : 'text-gray-700'
                           }`}>
                             {notification.title}
                           </p>
-                          <span className="text-xs text-gray-500">{notification.time}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">{notification.time}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                           {notification.message}
                         </p>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-reality-500 rounded-full mt-2"></div>
+                          <div className="w-2 h-2 bg-reality-500 rounded-full mt-2 animate-pulse"></div>
                         )}
                       </div>
                     </div>
